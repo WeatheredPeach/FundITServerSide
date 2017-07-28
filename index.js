@@ -2,6 +2,10 @@ var express = require('express')
 var http = require("http-request")
 var app = express()
 
+var mongoose = require('mongoose'),
+  Task = require('./api/models/todoListModel'),
+  bodyParser = require('body-parser');
+
 var topics, calls;
 
 const topicsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/topics.json';
@@ -13,10 +17,17 @@ var myLogger = function (req, res, next) {
 }
 
 app.use(myLogger)
+  
+mongoose.Promise = global.Promise;
+mongoose.connect('mongodb://localhost/Tododb'); 
 
-app.get('/', function (req, res) {
-  res.send(calls)
-})
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+
+var routes = require('./api/routes/todoListRoutes');
+routes(app);
 
 function setUp(){
 
@@ -43,6 +54,8 @@ function setUp(){
 	})
 }
 
-setUp()
+//setUp()
 
 app.listen(3000)
+
+console.log('todo list RESTful API server started on: ' + 3000)

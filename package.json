@@ -4,12 +4,18 @@
   "description": "Serverside code for FundIT project",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.17.2",
     "express": "^4.15.3",
-    "http-request": "^0.7.0"
+    "http-request": "^0.7.0",
+    "mongoose": "^4.11.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
   }
 }
