@@ -37,6 +37,9 @@ var options =
 const indexData = function(err, newIndex) {
   if (!err) {
     si = newIndex
+	si.flush(function(err) {
+		if (!err) console.log('success!')
+	})
     request(localDescURL)
       .pipe(si.feed()
       .on('finish', searchCLI))
@@ -121,25 +124,30 @@ exports.search = function(req, res) {
 	}
 	else{
 		
-		res.setHeader('Content-Type', 'application/json')
-		
 		var tmpQuery = {
 			query: [{
 				AND: {'*': ['new']}
 			}]
 		}
-		/*
-		var hitsCount
-		si.totalHits(q, function (err, count) {
-			hitsCount = count
-		})*/
 		
-		//var i = 0
+		var hitsCount
+		si.totalHits(tmpQuery, function (err, count) {
+			hitsCount = count
+		})
+		
+		var dataCollection = []
+		var i = 0
 		si.search(tmpQuery).on('data', function (data) {
-			console.log(data)
-			res.write(JSON.stringify(data))
-			//i++
-			//if (i === hitsCount) res.end()
+			
+			console.log(i + " " + hitsCount)
+			
+			dataCollection.push(data["document"])
+			i++
+			if (i === 19) {
+				console.log("ping")
+				res.json(JSON.stringify(dataCollection))
+			}
+			if (i > hitsCount) console.log("We've gone too far")
 		})
 	}
 }
