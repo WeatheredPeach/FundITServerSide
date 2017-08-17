@@ -4,23 +4,24 @@ const NUMBER_OF_DESCRIPTIONS = 10
 
 var express = require('express')
 var path    = require("path")
-
+const request = require('request')
+const fs = require('fs')
 var mongoose = require('mongoose')
-
-var topics, calls, descriptions, temp
-
-const topicsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/topics.json'
-const descriptionsURL = 'http://ec.europa.eu/research/participants/portal/data/call/topics/'
-const callsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/calls.json'
-
 var http = require("http-request")
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest
 var synq = new XMLHttpRequest()
 
+var topics, calls, descriptions, temp, descLoaded = false
+
+const topicsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/topics.json'
+const descriptionsURL = 'http://ec.europa.eu/research/participants/portal/data/call/topics/'
+const callsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/calls.json'
+const localDescURL = 'http://localhost:3000/fetchData'
+
 var si
 var options =
 {
-  batchSize: 1000,
+  batchSize: 2500,
   fieldedSearch: true,
   fieldOptions: {},
   preserveCase: false,
@@ -33,14 +34,20 @@ var options =
   separator: /[\|' \.,\-|(\n)]+/,
   stopwords: require('stopword').en,
 }
-var searchIndex = require('search-index')
-const initIndex = function (err, index){
-	// si is now a new search index
-	si = index
-	
-	setUp()
+const indexData = function(err, newIndex) {
+  if (!err) {
+    si = newIndex
+    request(localDescURL)
+      .pipe(si.feed()
+      .on('finish', searchCLI))
+  }
 }
-searchIndex(options,initIndex)
+require('search-index')(options, indexData)
+
+const searchCLI = function () {
+	descLoaded = true
+	console.log("Descriptions ready for search")
+}
 
 function setUp(){
 
@@ -54,6 +61,12 @@ function setUp(){
 		topics = JSON.parse(res.buffer.toString())
 		topics = topics["topicData"]["Topics"]
 		descriptions = []
+		fs.writeFile("./tmp/test", "", function(err) {
+			if(err) {
+				return console.log(err);
+			}
+			console.log("The file was emptied!")
+		})
 
 		for(var j = 0, len = topics.length; j < len; j++) {
 			
@@ -64,20 +77,28 @@ function setUp(){
 			synq.send(null);
 
 			if (synq.status === 200) {
-				descriptions.push(JSON.parse(synq.responseText))
-				descriptions[j]["topicID"] = topics[j]["topicFileName"]
-				
+				//descriptions.push(JSON.parse(synq.responseText))
+				/*
 				si.concurrentAdd({}, descriptions[j], function(err) {
 					if (!err) {console.log('indexed!')}
 					else console.log(err)
 
+				})*/
+				
+				fs.appendFile("./tmp/test", synq.responseText + "\n", function(err) {
+					if(err) {
+						return console.log(err);
+					}
+
+					console.log("The file was appended to!");
 				})
 
 			}
 			
-			if(j > NUMBER_OF_DESCRIPTIONS) break
+			//if(j > NUMBER_OF_DESCRIPTIONS) break
 			
 		}
+		//console.log(descriptions)
 	})
 
 	//GET html page containing Calls JSON from H2020
@@ -94,17 +115,39 @@ function setUp(){
 
 exports.search = function(req, res) {
 	
-	si.search({
-		query: [{
-			AND: {'*': ['new']}
-		}]
-	}).on('data', function (data) {
-		console.log(data)
-		res.json(data)
-	})
+	if(descLoaded === false){
+		console.log("false")
+		res.send("Not done loading yet")
+	}
+	else{
+		
+		res.setHeader('Content-Type', 'application/json')
+		
+		var tmpQuery = {
+			query: [{
+				AND: {'*': ['new']}
+			}]
+		}
+		/*
+		var hitsCount
+		si.totalHits(q, function (err, count) {
+			hitsCount = count
+		})*/
+		
+		//var i = 0
+		si.search(tmpQuery).on('data', function (data) {
+			console.log(data)
+			res.write(JSON.stringify(data))
+			//i++
+			//if (i === hitsCount) res.end()
+		})
+	}
 }
 
 exports.sendWebpage = function(req, res) {
 	res.sendFile(path.join(__dirname + '/../../app/public/index.html'))
 }
 
+exports.sendData = function(req, res) {
+	res.sendFile(path.join(__dirname + '/../../data/test'))
+}

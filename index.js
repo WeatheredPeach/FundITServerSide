@@ -3,6 +3,7 @@ var app = express()
 var fundIT = require('./api/controllers/fundITController')
 
 app.use(express.static('app/build'))
+app.use(express.static('data'))
 
 var mongoose = require('mongoose'),
 	Task = require('./api/models/fundITModel'),

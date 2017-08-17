@@ -7,4 +7,7 @@ module.exports = function(app) {
 
 	app.route('/search')
 		.get(fundIT.search);
+		
+	app.route('/fetchData')
+		.get(fundIT.sendData);
 };
