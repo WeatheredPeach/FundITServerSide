@@ -43,7 +43,7 @@ const indexData = function(err, newIndex) {
     request(localDescURL)
       .pipe(si.feed()
       .on('finish', searchCLI))
-	searchCLI()
+	//searchCLI()
   }
 }
 require('search-index')(options, indexData)
