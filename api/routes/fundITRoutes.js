@@ -8,6 +8,9 @@ module.exports = function(app) {
 	app.route('/search')
 		.get(fundIT.search);
 		
+	app.route('/update')
+		.get(fundIT.updateDatabase);
+		
 	app.route('/fetchData')
 		.get(fundIT.sendData);
 };

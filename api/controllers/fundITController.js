@@ -43,6 +43,7 @@ const indexData = function(err, newIndex) {
     request(localDescURL)
       .pipe(si.feed()
       .on('finish', searchCLI))
+	searchCLI()
   }
 }
 require('search-index')(options, indexData)
@@ -124,32 +125,45 @@ exports.search = function(req, res) {
 	}
 	else{
 		
-		var tmpQuery = {
-			query: [{
-				AND: {'*': ['new']}
-			}]
-		}
+		var tmpQuery = JSON.parse(req.get('query'))
+		
+		
 		
 		var hitsCount
 		si.totalHits(tmpQuery, function (err, count) {
 			hitsCount = count
+			
+		console.log(hitsCount)
 		})
 		
 		var dataCollection = []
 		var i = 0
 		si.search(tmpQuery).on('data', function (data) {
 			
-			console.log(i + " " + hitsCount)
-			
 			dataCollection.push(data["document"])
-			i++
-			if (i === 19) {
-				console.log("ping")
-				res.json(JSON.stringify(dataCollection))
-			}
-			if (i > hitsCount) console.log("We've gone too far")
+
+		})
+		.on('finish', function (){
+
+			res.json(dataCollection)
 		})
 	}
+}
+
+exports.updateDatabase = function(req, res) {
+	
+	console.log("Updating local H2020 data database")
+	
+	descLoaded = false
+	
+	si.flush(function(err) {
+		if (!err) console.log('success!')
+	})
+    request(localDescURL)
+      .pipe(si.feed()
+      .on('finish', searchCLI))
+	searchCLI()
+	
 }
 
 exports.sendWebpage = function(req, res) {
