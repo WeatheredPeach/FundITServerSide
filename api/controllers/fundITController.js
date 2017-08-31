@@ -44,6 +44,7 @@ const indexData = function(err, newIndex) {
       .pipe(si.feed()
       .on('finish', searchCLI))
 	//searchCLI()
+	//setUp()
   }
 }
 require('search-index')(options, indexData)
@@ -64,13 +65,7 @@ function setUp(){
 		
 		topics = JSON.parse(res.buffer.toString())
 		topics = topics["topicData"]["Topics"]
-		descriptions = []
-		fs.writeFile("./tmp/test", "", function(err) {
-			if(err) {
-				return console.log(err);
-			}
-			console.log("The file was emptied!")
-		})
+		var overhead = {}
 
 		for(var j = 0, len = topics.length; j < len; j++) {
 			
@@ -81,28 +76,26 @@ function setUp(){
 			synq.send(null);
 
 			if (synq.status === 200) {
-				//descriptions.push(JSON.parse(synq.responseText))
-				/*
-				si.concurrentAdd({}, descriptions[j], function(err) {
-					if (!err) {console.log('indexed!')}
-					else console.log(err)
-
-				})*/
 				
-				fs.appendFile("./tmp/test", synq.responseText + "\n", function(err) {
-					if(err) {
-						return console.log(err);
-					}
-
-					console.log("The file was appended to!");
-				})
-
+				topics[j]["description"] = JSON.parse(synq.responseText);
+				
 			}
 			
-			//if(j > NUMBER_OF_DESCRIPTIONS) break
+			fs.appendFile("./tmp/test", JSON.stringify(topics[j]) + "\n", function(err) {
+				if(err) {
+					return console.log(err);
+				}
+
+			})
+			
+			overhead["topicId"] = "Read"
 			
 		}
-		//console.log(descriptions)
+		fs.appendFile("./tmp/overhead", JSON.stringify(overhead) + "\n", function(err) {
+			if(err) {
+				return console.log(err);
+			}
+		})
 	})
 
 	//GET html page containing Calls JSON from H2020
