@@ -240,7 +240,7 @@ exports.search = function(req, res) {
 						aggregateString = aggregateString + ' OR '
 					}
 					else{
-						aggregateString = aggregateString + ') '
+						aggregateString = aggregateString + ')'
 					}
 				}
 				newString = newString + aggregateString
