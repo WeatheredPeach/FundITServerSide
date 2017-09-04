@@ -5,7 +5,7 @@ module.exports = function(app) {
 	app.route('/')
 		.get(fundIT.sendWebpage);
 
-	app.route('/search')
+	app.route('/search*')
 		.get(fundIT.search);
 		
 	app.route('/update')
