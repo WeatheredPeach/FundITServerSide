@@ -37,13 +37,13 @@ var options =
 const indexData = function(err, newIndex) {
   if (!err) {
     si = newIndex
-	/*/
+	//
 	si.flush(function(err) {
 		if (!err) console.log('success!')
 	})
     request(localDescURL)
       .pipe(si.feed()
-      .on('finish', searchCLI))*/
+      .on('finish', searchCLI))
 	searchCLI()
 	//setUp()
   }
