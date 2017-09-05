@@ -14,6 +14,6 @@ app.use(bodyParser.json());
 var routes = require('./api/routes/fundITRoutes');
 routes(app);
 
-app.listen(3001)
+app.listen(8080, "0.0.0.0")
 
-console.log('todo list RESTful API server started on: ' + 3001)
+console.log('todo list RESTful API server started on: ' + 8080)

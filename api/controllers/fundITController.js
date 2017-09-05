@@ -16,7 +16,7 @@ var topics, calls, descriptions, temp, descLoaded = false
 const topicsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/topics.json'
 const descriptionsURL = 'http://ec.europa.eu/research/participants/portal/data/call/topics/'
 const callsURL = 'http://ec.europa.eu/research/participants/portal/data/call/h2020/calls.json'
-const localDescURL = 'http://localhost:3000/fetchData'
+const localDescURL = 'http://localhost:8080/fetchData'
 
 var si
 var options =
@@ -36,16 +36,17 @@ var options =
 }
 const indexData = function(err, newIndex) {
   if (!err) {
+	//setUp()
     si = newIndex
-	//
+	/*/
 	si.flush(function(err) {
 		if (!err) console.log('success!')
 	})
     request(localDescURL)
       .pipe(si.feed()
-      .on('finish', searchCLI))
+      .on('finish', searchCLI))*/
 	searchCLI()
-	//setUp()
+	
   }
 }
 require('search-index')(options, indexData)
@@ -72,7 +73,7 @@ function setUp(){
 			
 			//if (j > 10) {break;}
 			
-			//GET html page containing Description JSON from H2020
+			/*/GET html page containing Description JSON from H2020
 			synq.open('GET', descriptionsURL + topics[j]["topicFileName"] + ".json", false);
 			synq.send(null);
 
@@ -80,7 +81,7 @@ function setUp(){
 				
 				topics[j]["description"] = JSON.parse(synq.responseText);
 				
-			}
+			}*/
 			
 			fs.appendFile("./tmp/test", JSON.stringify(topics[j]) + "\n", function(err) {
 				if(err) {
@@ -118,9 +119,14 @@ exports.search = function(req, res) {
 		res.send("Not done loading yet")
 	}
 	else{
+		var t0 = process.hrtime()
 		var searchString = req.url.substr(8)
 		var searchScopes = []
 		var tmpString
+		
+		
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
 		
 		if(searchString.substr(0, 6) === 'scope:'){
 			searchString = searchString.substr(6)
@@ -144,8 +150,9 @@ exports.search = function(req, res) {
 				}
 			}
 		}
+		var t1 = process.hrtime()
 		
-		console.log("Scopes = " + searchScopes)
+		console.log("Scopes = " + searchScopes + ' Time: ' + (((t1[0] - t0[0]) * 1000) + ((t1[1] - t0[1]) / 1000000)) + ' milliseconds.')
 		
 		//If the next part of the URL contains search string
 		if(searchString.substr(0,7) === 'string:'){
@@ -159,7 +166,7 @@ exports.search = function(req, res) {
 		var newString = ''
 		var aggregateString
 		
-		console.log("Search = " + searchString)
+		//console.log("Search = " + searchString)
 		
 		//Remove ()s
 		for(var i = 0, end = searchString.length; i < end; i++){
@@ -171,7 +178,7 @@ exports.search = function(req, res) {
 			}
 		}
 		
-		console.log("Search = " + searchString)
+		//console.log("Search = " + searchString)
 		
 		//Apply scopes
 		for(var i = 0, end = searchString.length; i < end; i++){
@@ -256,8 +263,8 @@ exports.search = function(req, res) {
 				}
 			}
 		}
-		
-		console.log("Search = " + searchString)
+		t1 = process.hrtime()
+		console.log("Search = " + searchString + ' Time: ' + (((t1[0] - t0[0]) * 1000) + ((t1[1] - t0[1]) / 1000000)) + ' milliseconds.')
 		
 		//Parse search string to query-like structure, implement logic
 		var tmpParsed = searchparser.parse(searchString)
@@ -284,6 +291,8 @@ exports.search = function(req, res) {
 		
 		tmpQuery['query'] = queryStructure
 		
+		tmpQuery['pageSize'] = 3000
+		
 		console.log('\n\n\n' + JSON.stringify(tmpQuery))
 		
 		var hitsCount
@@ -292,6 +301,9 @@ exports.search = function(req, res) {
 			
 		console.log(hitsCount)
 		})
+		
+		t1 = process.hrtime()
+		console.log('Before search:' + ' Time: ' + (((t1[0] - t0[0]) * 1000) + ((t1[1] - t0[1]) / 1000000)) + ' milliseconds.')
 		
 		var dataCollection = []
 		dataCollection.push([0])
@@ -302,6 +314,9 @@ exports.search = function(req, res) {
 
 		})
 		.on('finish', function (){
+			
+		t1 = process.hrtime()
+		console.log('After search:' + ' Time: ' + (((t1[0] - t0[0]) * 1000) + ((t1[1] - t0[1]) / 1000000)) + ' milliseconds.')
 
 			res.json(dataCollection)
 		})
